@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🔧 갈매지구런 관리자</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Gaegu:wght@400;700&family=Nanum+Gothic+Coding:wght@400;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Gaegu',cursive; background:#f0f7f2; color:#1a3a24; min-height:100vh; }
+
+/* 로그인 화면 */
+#loginScreen {
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,#e6f5eb,#f0f7f2);
+}
+.login-card {
+  background:#fff; border:2px solid #c8e8d0; border-radius:24px;
+  padding:48px 44px; text-align:center; width:360px;
+  box-shadow:0 8px 32px rgba(30,100,60,0.1);
+}
+.login-title { font-family:'Jua',sans-serif; font-size:26px; color:#1e7a40; margin-bottom:6px; }
+.login-sub { font-size:15px; color:#7aaa8a; margin-bottom:28px; }
+.login-input {
+  width:100%; padding:13px 18px; border-radius:14px;
+  border:2px solid #c8e8d0; background:#f5fbf6;
+  font-family:'Gaegu',cursive; font-size:17px; color:#1a3a24;
+  outline:none; margin-bottom:12px;
+  transition:border-color 0.2s;
+}
+.login-input:focus { border-color:#2ec858; }
+.login-btn {
+  width:100%; padding:13px; border-radius:14px; border:none;
+  background:#1e7a40; color:#fff;
+  font-family:'Jua',sans-serif; font-size:18px; cursor:pointer;
+  transition:background 0.2s;
+}
+.login-btn:hover { background:#186636; }
+.login-error { font-size:14px; color:#c83a2a; margin-top:8px; display:none; }
+
+/* 메인 관리자 화면 */
+#adminScreen { display:none; }
+
+.topbar {
+  background:#fff; border-bottom:2px solid #c8e8d0;
+  padding:12px 32px; display:flex; align-items:center; justify-content:space-between;
+  box-shadow:0 2px 8px rgba(30,100,60,0.07); position:sticky; top:0; z-index:50;
+}
+.logo { font-family:'Jua',sans-serif; font-size:24px; color:#1e7a40; }
+.topbar-right { display:flex; align-items:center; gap:12px; }
+.logout-btn {
+  font-family:'Gaegu',cursive; font-size:14px; color:#5a8a6a;
+  background:#f0f7f2; border:1.5px solid #c8e8d0; border-radius:100px;
+  padding:5px 16px; cursor:pointer; transition:background 0.15s;
+}
+.logout-btn:hover { background:#ddf0e4; }
+
+.content { max-width:860px; margin:0 auto; padding:28px 24px 60px; }
+
+/* 섹션 카드 */
+.section {
+  background:#fff; border:1.5px solid #c8e8d0; border-radius:20px;
+  padding:24px 28px; margin-bottom:20px;
+  box-shadow:0 2px 10px rgba(30,100,60,0.05);
+}
+.section-title {
+  font-family:'Jua',sans-serif; font-size:19px; color:#1a3a24;
+  margin-bottom:16px; display:flex; align-items:center; gap:8px;
+}
+
+/* GitHub 설정 */
+.setting-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.setting-row.single { grid-template-columns:1fr; }
+.field-label { font-size:14px; color:#5a8a6a; margin-bottom:5px; }
+.field-input {
+  width:100%; padding:10px 14px; border-radius:12px;
+  border:1.5px solid #c8e8d0; background:#f5fbf6;
+  font-family:'Nanum Gothic Coding',monospace; font-size:14px; color:#1a3a24;
+  outline:none; transition:border-color 0.2s;
+}
+.field-input:focus { border-color:#2ec858; }
+.field-input.token { -webkit-text-security:disc; }
+.save-btn {
+  padding:9px 22px; border-radius:12px; border:none;
+  background:#1e7a40; color:#fff;
+  font-family:'Jua',sans-serif; font-size:15px; cursor:pointer;
+  transition:background 0.2s;
+}
+.save-btn:hover { background:#186636; }
+.save-btn:disabled { background:#9aca9a; cursor:not-allowed; }
+
+/* 기본 수치 수정 */
+.nums-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+
+/* CSV 붙여넣기 */
+.csv-area {
+  width:100%; height:180px; padding:12px 14px;
+  border-radius:12px; border:1.5px solid #c8e8d0; background:#f5fbf6;
+  font-family:'Nanum Gothic Coding',monospace; font-size:13px; color:#1a3a24;
+  resize:vertical; outline:none; transition:border-color 0.2s;
+}
+.csv-area:focus { border-color:#2ec858; }
+.btn-row { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+.parse-btn {
+  padding:9px 22px; border-radius:12px; border:none;
+  background:#e6f5eb; color:#1e7a40; border:1.5px solid #a0d8b0;
+  font-family:'Jua',sans-serif; font-size:15px; cursor:pointer;
+  transition:background 0.2s;
+}
+.parse-btn:hover { background:#c8ecda; }
+
+/* 파싱 결과 미리보기 */
+.preview-table {
+  width:100%; border-collapse:collapse; margin-top:12px;
+  font-size:14px;
+}
+.preview-table th {
+  background:#e6f5eb; color:#1e7a40; padding:8px 12px;
+  text-align:left; font-family:'Jua',sans-serif; font-size:14px;
+  border-bottom:2px solid #c8e8d0;
+}
+.preview-table td {
+  padding:7px 12px; border-bottom:1px solid #e8f5ec; color:#1a3a24;
+}
+.preview-table tr:hover td { background:#f5fbf6; }
+.tag-badge {
+  display:inline-block; font-size:12px; padding:1px 8px;
+  border-radius:100px; font-family:'Gaegu',cursive;
+}
+.tag-s { background:#e0f5e6; color:#1e7a40; border:1px solid #a0d8b0; }
+.tag-t { background:#e0eef8; color:#1a6aaa; border:1px solid #a0c0e0; }
+.tag-p { background:#fff5e0; color:#c87a10; border:1px solid #e8c870; }
+.tag-c { background:#f5ede0; color:#9a6030; border:1px solid #ddb888; }
+.no-class { color:#c8c8c8; font-size:12px; }
+
+/* 파싱 통계 */
+.parse-stats {
+  display:flex; gap:12px; flex-wrap:wrap; margin:10px 0;
+}
+.pstat {
+  background:#f0f7f2; border:1.5px solid #c8e8d0; border-radius:12px;
+  padding:8px 16px; text-align:center;
+}
+.pstat-num { font-family:'Jua',sans-serif; font-size:20px; color:#1e7a40; }
+.pstat-label { font-size:12px; color:#7aaa8a; }
+
+/* 배포 버튼 */
+.deploy-btn {
+  width:100%; padding:16px; border-radius:16px; border:none;
+  background:linear-gradient(90deg,#1e7a40,#2ec858);
+  color:#fff; font-family:'Jua',sans-serif; font-size:20px;
+  cursor:pointer; transition:opacity 0.2s;
+  box-shadow:0 4px 16px rgba(30,122,64,0.25);
+  display:flex; align-items:center; justify-content:center; gap:10px;
+}
+.deploy-btn:hover { opacity:0.9; }
+.deploy-btn:disabled { background:#9aca9a; cursor:not-allowed; box-shadow:none; }
+
+/* 상태 메시지 */
+.status-box {
+  margin-top:14px; padding:14px 18px; border-radius:14px;
+  font-size:15px; line-height:1.6; display:none;
+}
+.status-box.success { background:#e6f5eb; border:1.5px solid #5ec87a; color:#1e7a40; }
+.status-box.error   { background:#fdf0f0; border:1.5px solid #e87a7a; color:#c83a2a; }
+.status-box.loading { background:#f0f7ff; border:1.5px solid #7aa8e8; color:#1a4a8a; }
+
+/* 테이블 스크롤 */
+.table-wrap { max-height:320px; overflow-y:auto; border-radius:12px; border:1.5px solid #e0f0e6; }
+.table-wrap::-webkit-scrollbar { width:5px; }
+.table-wrap::-webkit-scrollbar-thumb { background:#c8e8d0; border-radius:3px; }
+
+/* 파일 업로드 영역 */
+.upload-area {
+  border:2.5px dashed #a0d8b0; border-radius:16px;
+  padding:28px 20px; text-align:center;
+  background:#f5fbf6; cursor:pointer;
+  transition:background 0.2s, border-color 0.2s;
+  margin-bottom:12px;
+}
+.upload-area:hover, .upload-area.drag-over {
+  background:#e6f5eb; border-color:#2ec858;
+}
+.upload-icon { font-size:36px; margin-bottom:8px; }
+.upload-title { font-family:'Jua',sans-serif; font-size:17px; color:#1e7a40; margin-bottom:4px; }
+.upload-sub { font-size:14px; color:#7aaa8a; }
+.upload-file-input { display:none; }
+.upload-filename {
+  display:none; margin-top:10px; padding:8px 14px;
+  background:#e6f5eb; border:1.5px solid #5ec87a;
+  border-radius:10px; font-size:14px; color:#1e7a40;
+  font-family:'Nanum Gothic Coding',monospace;
+}
+.or-divider {
+  display:flex; align-items:center; gap:12px;
+  margin:12px 0; color:#9aca9a; font-size:14px;
+}
+.or-divider::before, .or-divider::after {
+  content:''; flex:1; height:1px; background:#c8e8d0;
+}
+
+/* 파싱 실패 목록 */
+.fail-list { background:#fff8e6; border:1.5px solid #f0c840; border-radius:12px; padding:12px 16px; margin-top:10px; }
+.fail-list-title { font-family:'Jua',sans-serif; font-size:15px; color:#c87a10; margin-bottom:8px; }
+.fail-item { font-size:13px; color:#7a5a10; padding:3px 0; border-bottom:1px solid rgba(240,200,64,0.3); font-family:'Nanum Gothic Coding',monospace; }
+.fail-item:last-child { border-bottom:none; }
+</style>
+</head>
+<body>
+
+<!-- 로그인 화면 -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-title">🔧 관리자 로그인</div>
+    <div class="login-sub">갈매지구런 대시보드 관리</div>
+    <input class="login-input" id="pwInput" type="password"
+      placeholder="관리자 비밀번호"
+      onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">로그인</button>
+    <div class="login-error" id="loginError">비밀번호가 틀렸습니다</div>
+  </div>
+</div>
+
+<!-- 관리자 메인 -->
+<div id="adminScreen">
+  <div class="topbar">
+    <div class="logo">🔧 갈매지구런 관리자</div>
+    <div class="topbar-right">
+      <span style="font-size:14px;color:#7aaa8a">10isjin / galmaejigurun</span>
+      <button class="logout-btn" onclick="doLogout()">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ① GitHub 연결 설정 -->
+    <div class="section">
+      <div class="section-title">⚙️ GitHub 연결 설정</div>
+      <div class="setting-row">
+        <div>
+          <div class="field-label">GitHub 사용자명</div>
+          <input class="field-input" id="ghUser" value="10isjin" readonly/>
+        </div>
+        <div>
+          <div class="field-label">저장소 이름</div>
+          <input class="field-input" id="ghRepo" value="galmaejigurun" readonly/>
+        </div>
+      </div>
+      <div class="setting-row single">
+        <div>
+          <div class="field-label">📄 저장소 파일명 (GitHub에 올린 실제 파일명)</div>
+          <input class="field-input" id="ghFilename" value="galmaejigurun.html"
+            placeholder="index.html 또는 galmaejigurun.html"/>
+          <div style="font-size:12px;color:#9aca9a;margin-top:4px">
+            GitHub 저장소에서 파일명을 확인 후 입력하세요
+          </div>
+        </div>
+      </div>
+      <div class="setting-row single">
+        <div>
+          <div class="field-label">🔑 GitHub Token (입력 후 저장 — 이 기기에만 보관됩니다)</div>
+          <div style="display:flex;gap:8px">
+            <input class="field-input token" id="ghToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="flex:1"/>
+            <button class="save-btn" onclick="saveToken()">저장</button>
+          </div>
+          <div style="font-size:12px;color:#9aca9a;margin-top:5px">토큰은 브라우저에만 저장되며 외부로 전송되지 않아요</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② 기본 수치 수정 -->
+    <div class="section">
+      <div class="section-title">📊 기본 수치 수정</div>
+      <div class="nums-grid">
+        <div>
+          <div class="field-label">경과 일수 (D+?)</div>
+          <input class="field-input" id="numDaysElapsed" type="number" value="6"/>
+        </div>
+        <div>
+          <div class="field-label">남은 일수</div>
+          <input class="field-input" id="numDaysLeft" type="number" value="56"/>
+        </div>
+        <div>
+          <div class="field-label">챌린지 날짜 표시</div>
+          <input class="field-input" id="numDateLabel" value="2025.04.22 – 06.22"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ 런데이 CSV 업로드 / 붙여넣기 -->
+    <div class="section">
+      <div class="section-title">📋 런데이 CSV 데이터 불러오기</div>
+      <div style="font-size:14px;color:#5a8a6a;margin-bottom:14px">
+        런데이 관리자 페이지에서 내보낸 CSV 파일을 올리거나, 내용을 직접 붙여넣으세요.<br>
+        학번(5자리) 닉네임은 자동으로 학급이 배정됩니다.
+      </div>
+
+      <!-- 파일 업로드 -->
+      <div class="upload-area" id="uploadArea"
+        onclick="document.getElementById('csvFileInput').click()"
+        ondragover="onDragOver(event)"
+        ondragleave="onDragLeave(event)"
+        ondrop="onDrop(event)">
+        <div class="upload-icon">📂</div>
+        <div class="upload-title">CSV 파일을 여기에 끌어다 놓거나 클릭해서 선택</div>
+        <div class="upload-sub">런데이에서 내보낸 .csv 파일 지원</div>
+        <div class="upload-filename" id="uploadFilename"></div>
+      </div>
+      <input class="upload-file-input" type="file" id="csvFileInput"
+        accept=".csv,text/csv" onchange="onFileSelect(event)"/>
+
+      <!-- 구분선 -->
+      <div class="or-divider">또는 직접 붙여넣기</div>
+
+      <!-- 텍스트 붙여넣기 -->
+      <textarea class="csv-area" id="csvInput" style="height:140px"
+        placeholder="닉네임,이름,소속,누적거리(km)&#10;10101 김민준,김민준,학생,87.4&#10;박서연,박서연,교직원,74.2&#10;..."></textarea>
+
+      <div class="btn-row">
+        <button class="parse-btn" onclick="parseCSV()">🔍 데이터 파싱 &amp; 미리보기</button>
+        <button class="parse-btn" onclick="clearCSV()" style="background:#fdf5f5;color:#c83a2a;border-color:#e8b0b0">✕ 초기화</button>
+      </div>
+    </div>
+
+    <!-- ④ 파싱 결과 미리보기 (숨김) -->
+    <div class="section" id="previewSection" style="display:none">
+      <div class="section-title">👀 파싱 결과 미리보기</div>
+      <div class="parse-stats" id="parseStats"></div>
+      <div class="table-wrap">
+        <table class="preview-table">
+          <thead><tr><th>#</th><th>이름</th><th>소속</th><th>학급</th><th>km</th></tr></thead>
+          <tbody id="previewBody"></tbody>
+        </table>
+      </div>
+      <div id="failSection" style="display:none">
+        <div class="fail-list">
+          <div class="fail-list-title">⚠️ 학번 파싱 실패 (학급 미배정) — 학생들에게 닉네임 형식 안내 필요</div>
+          <div id="failList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑤ GitHub 배포 -->
+    <div class="section">
+      <div class="section-title">🚀 GitHub에 배포하기</div>
+      <div style="font-size:14px;color:#5a8a6a;margin-bottom:16px;line-height:1.6">
+        위에서 데이터를 파싱한 뒤 아래 버튼을 누르면<br>
+        GitHub <b>galmaejigurun/index.html</b> 파일이 자동으로 업데이트되고<br>
+        Netlify가 감지해서 <b>1~2분 내</b> 대시보드에 반영돼요.
+      </div>
+      <button class="deploy-btn" id="deployBtn" onclick="deployToGitHub()">
+        🚀 GitHub에 바로 배포하기
+      </button>
+      <div class="status-box" id="statusBox"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── 파일 업로드 ──────────────────────────────────────────────
+function onDragOver(e){e.preventDefault();document.getElementById('uploadArea').classList.add('drag-over');}
+function onDragLeave(e){document.getElementById('uploadArea').classList.remove('drag-over');}
+function onDrop(e){
+  e.preventDefault();
+  document.getElementById('uploadArea').classList.remove('drag-over');
+  const file=e.dataTransfer.files[0];
+  if(file)readCSVFile(file);
+}
+function onFileSelect(e){const file=e.target.files[0];if(file)readCSVFile(file);}
+function readCSVFile(file){
+  if(!file.name.toLowerCase().endsWith('.csv'))return alert('CSV 파일만 올릴 수 있어요 (.csv)');
+  const tryRead=(enc)=>new Promise(res=>{
+    const r=new FileReader();
+    r.onload=ev=>res(ev.target.result);
+    r.readAsText(file,enc);
+  });
+  tryRead('UTF-8').then(text=>{
+    if(text.includes('�')){
+      // EUC-KR 재시도
+      tryRead('EUC-KR').then(t2=>{loadCSVText(t2,file);});
+    } else {
+      loadCSVText(text,file);
+    }
+  });
+}
+function loadCSVText(text,file){
+  document.getElementById('csvInput').value=text;
+  const fn=document.getElementById('uploadFilename');
+  fn.textContent='✅ '+file.name+' ('+(file.size/1024).toFixed(1)+'KB) 로드 완료';
+  fn.style.display='block';
+  parseCSV();
+}
+
+// ── 설정 ──────────────────────────────────────────────────────
+const ADMIN_PW   = 'galmaejigurun2026'; // ← 비밀번호 여기서 변경
+const GH_USER    = '10isjin';
+const GH_REPO    = 'galmaejigurun';
+const GH_FILE    = 'galmaejigurun.html'; // 저장소의 파일명 (index.html 또는 galmaejigurun.html)
+const TOTAL_KM   = 40075;
+const CIRC       = 490;
+
+// ── 로그인 ───────────────────────────────────────────────────
+function doLogin() {
+  const pw = document.getElementById('pwInput').value;
+  if (pw === ADMIN_PW) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminScreen').style.display = 'block';
+    loadToken();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+function doLogout() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('adminScreen').style.display = 'none';
+  document.getElementById('pwInput').value = '';
+}
+
+// ── Token 저장/불러오기 (브라우저 로컬에만) ──────────────────
+function saveToken() {
+  const t = document.getElementById('ghToken').value.trim();
+  if (!t) return alert('토큰을 입력해주세요');
+  localStorage.setItem('gh_token', t);
+  alert('✅ 토큰이 저장됐어요! (이 브라우저에만 보관됩니다)');
+}
+function loadToken() {
+  const t = localStorage.getItem('gh_token');
+  if (t) document.getElementById('ghToken').value = t;
+}
+function getToken() {
+  return document.getElementById('ghToken').value.trim() || localStorage.getItem('gh_token') || '';
+}
+
+// ── CSV 파싱 ─────────────────────────────────────────────────
+let parsedRunners = null;
+
+function parseNick(nick, nameHint) {
+  nick = nick.trim();
+  // 패턴1: "12345 이름" or "12345이름"
+  let m = nick.match(/^(\d{5})\s*([^\d].*)$/);
+  if (m) {
+    const code = m[1], g = parseInt(code[0]), b = parseInt(code[1]);
+    if (g >= 1 && g <= 3 && b >= 1 && b <= 15) {
+      const name = m[2].replace(/[./\-_]/g,'').trim() || nameHint;
+      return { name, grade:g, ban:b, classKey:`${g}학년 ${b}반`, hasClass:true };
+    }
+  }
+  // 패턴2: "이름12345" (이름 뒤에 학번)
+  m = nick.match(/^([가-힣]{2,4})(\d{5})$/);
+  if (m) {
+    const code = m[2], g = parseInt(code[0]), b = parseInt(code[1]);
+    if (g >= 1 && g <= 3 && b >= 1 && b <= 15)
+      return { name:m[1], grade:g, ban:b, classKey:`${g}학년 ${b}반`, hasClass:true };
+  }
+  // 패턴3: "N학년M반..." 형식
+  m = nick.match(/(\d+)학년(\d+)반/);
+  if (m) {
+    const g = parseInt(m[1]), b = parseInt(m[2]);
+    if (g >= 1 && g <= 3 && b >= 1 && b <= 15) {
+      const name = nick.replace(/\d+학년\d+반\d*번?/,'').trim() || nameHint;
+      return { name, grade:g, ban:b, classKey:`${g}학년 ${b}반`, hasClass:true };
+    }
+  }
+  // 파싱 실패
+  const cleanName = (nameHint || nick).replace(/\(.*?\)/g,'').trim();
+  return { name: cleanName.length >= 2 ? cleanName : nick, grade:null, ban:null, classKey:null, hasClass:false };
+}
+
+function normalizeTag(raw) {
+  if (raw === '교직원') return '교사';
+  if (raw === '학부모') return '학부모';
+  if (raw === '학생')   return '학생';
+  return '지역주민';
+}
+
+function maskName(name, tag) {
+  if (tag !== '학부모' || name.length <= 1) return name;
+  return name.slice(0,-1) + 'O';
+}
+
+function parseCSVLine(line) {
+  // 따옴표 포함된 CSV 파싱
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQ = !inQ; }
+    else if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
+    else { cur += ch; }
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function parseCSV() {
+  const raw = document.getElementById('csvInput').value.trim();
+  if (!raw) return alert('CSV 데이터를 먼저 불러오거나 붙여넣어 주세요');
+
+  // BOM 제거
+  const cleaned = raw.replace(/^\uFEFF/, '');
+  const lines = cleaned.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) return alert('데이터가 너무 적어요. CSV 내용을 확인해주세요');
+
+  // 헤더 파싱 → 컬럼 인덱스 자동 감지
+  const header = parseCSVLine(lines[0]).map(h => h.replace(/"/g,'').trim());
+  const idxName  = header.findIndex(h => h === '이름');
+  const idxNick  = header.findIndex(h => h === '닉네임');
+  const idxTag   = header.findIndex(h => h === '소속');
+  const idxKm    = header.findIndex(h => h.includes('누적거리'));
+
+  if (idxNick === -1 || idxTag === -1 || idxKm === -1) {
+    return alert('CSV 형식이 맞지 않아요.\n런데이에서 내보낸 파일인지 확인해주세요.\n\n감지된 헤더: ' + header.join(', '));
+  }
+
+  const runners = [], fails = [];
+
+  lines.slice(1).forEach(line => {
+    if (!line.trim()) return;
+    const cols = parseCSVLine(line).map(c => c.replace(/"/g,'').trim());
+    if (cols.length <= Math.max(idxNick, idxTag, idxKm)) return;
+
+    const nick     = cols[idxNick] || '';
+    const nameHint = idxName >= 0 ? (cols[idxName] || nick) : nick;
+    const tagRaw   = cols[idxTag] || '';
+    const kmNum    = parseFloat(cols[idxKm]);
+
+    if (!nick && !nameHint) return;
+    if (isNaN(kmNum)) return;
+
+    const tag    = normalizeTag(tagRaw);
+    const parsed = parseNick(nick, nameHint);
+
+    if (tag === '학생' && !parsed.hasClass && kmNum > 0)
+      fails.push({ nick, nameHint, km: kmNum });
+
+    runners.push({
+      name:     maskName(parsed.name, tag),
+      rawName:  parsed.name,
+      tag,
+      km:       kmNum,
+      hasClass: tag === '학생' ? parsed.hasClass : false,
+      classKey: tag === '학생' ? parsed.classKey : null
+    });
+  });
+
+  runners.sort((a,b) => b.km - a.km);
+  parsedRunners = runners;
+  renderPreview(runners, fails);
+}
+
+function renderPreview(runners, fails) {
+  const tagCls = { 학생:'tag-s', 교사:'tag-t', 학부모:'tag-p', 지역주민:'tag-c' };
+  const total  = runners.length;
+  const withClass = runners.filter(r => r.hasClass).length;
+  const totalKm   = runners.reduce((s,r) => s+r.km, 0);
+
+  // 통계
+  document.getElementById('parseStats').innerHTML = `
+    <div class="pstat"><div class="pstat-num">${total}</div><div class="pstat-label">총 참가자</div></div>
+    <div class="pstat"><div class="pstat-num green" style="color:#1e7a40">${totalKm.toFixed(1)}</div><div class="pstat-label">총 km</div></div>
+    <div class="pstat"><div class="pstat-num" style="color:#1a6aaa">${withClass}</div><div class="pstat-label">학급 배정 학생</div></div>
+    <div class="pstat"><div class="pstat-num" style="color:#c87a10">${fails.length}</div><div class="pstat-label">학번 미확인</div></div>`;
+
+  // 테이블
+  const tbody = document.getElementById('previewBody');
+  tbody.innerHTML = runners.slice(0,50).map((r,i) => `
+    <tr>
+      <td style="color:#9aca9a;font-family:'Nanum Gothic Coding',monospace">${i+1}</td>
+      <td style="font-family:'Jua',sans-serif">${r.name}</td>
+      <td><span class="tag-badge ${tagCls[r.tag]||'tag-c'}">${r.tag}</span></td>
+      <td>${r.hasClass ? `<span style="color:#1e7a40;font-size:13px">${r.classKey}</span>` : '<span class="no-class">미배정</span>'}</td>
+      <td style="font-family:\'Nanum Gothic Coding\',monospace;font-weight:700;color:#1e7a40">${r.km.toFixed(1)}</td>
+    </tr>`).join('');
+  if (runners.length > 50) tbody.innerHTML += `<tr><td colspan="5" style="text-align:center;color:#9aca9a;padding:8px">... 외 ${runners.length-50}명</td></tr>`;
+
+  // 실패 목록
+  if (fails.length > 0) {
+    document.getElementById('failSection').style.display = 'block';
+    document.getElementById('failList').innerHTML = fails.slice(0,20).map(f =>
+      `<div class="fail-item">닉네임: ${f.nick} &nbsp;|&nbsp; 이름: ${f.nameHint} &nbsp;|&nbsp; ${f.km}km</div>`
+    ).join('');
+  } else {
+    document.getElementById('failSection').style.display = 'none';
+  }
+
+  document.getElementById('previewSection').style.display = 'block';
+}
+
+function clearCSV() {
+  document.getElementById('csvInput').value = '';
+  document.getElementById('previewSection').style.display = 'none';
+  const fn = document.getElementById('uploadFilename');
+  fn.style.display = 'none'; fn.textContent = '';
+  document.getElementById('csvFileInput').value = '';
+  parsedRunners = null;
+}
+
+// ── GitHub 배포 ───────────────────────────────────────────────
+async function deployToGitHub() {
+  const token = getToken();
+  if (!token) return showStatus('error', '⚠️ GitHub Token을 먼저 입력하고 저장해주세요');
+  if (!parsedRunners) return showStatus('error', '⚠️ CSV 데이터를 먼저 파싱해주세요');
+
+  const btn = document.getElementById('deployBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 배포 중...';
+  showStatus('loading', '🔄 GitHub에서 현재 파일을 가져오는 중...');
+
+  try {
+    // 1. 현재 파일 SHA 가져오기
+    const ghFilename = document.getElementById('ghFilename').value.trim() || GH_FILE;
+    const getRes = await fetch(
+      `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${ghFilename}`,
+      { headers: { Authorization:`Bearer ${token}`, Accept:'application/vnd.github+json' } }
+    );
+    if (!getRes.ok) {
+      if (getRes.status === 404)
+        throw new Error(`저장소에서 파일을 찾을 수 없어요.\n현재 설정된 파일명: "${GH_FILE}"\n\nGitHub 저장소에 올린 파일명과 일치하는지 확인해주세요.\n(예: galmaejigurun.html 또는 index.html)`);
+      throw new Error(`파일 조회 실패 (${getRes.status})`);
+    }
+    const fileData = await getRes.json();
+    const sha = fileData.sha;
+    const currentContent = atob(fileData.content.replace(/\n/g,''));
+
+    showStatus('loading', '🔄 데이터를 파일에 반영하는 중...');
+
+    // 2. 현재 파일의 runners 배열 교체
+    const daysElapsed = document.getElementById('numDaysElapsed').value || '6';
+    const daysLeft    = document.getElementById('numDaysLeft').value || '56';
+    const dateLabel   = document.getElementById('numDateLabel').value || '2025.04.22 – 06.22';
+
+    const newRunners  = buildRunnersJS(parsedRunners);
+    const totalKm     = parsedRunners.reduce((s,r) => s+r.km, 0);
+    const pct         = (totalKm / TOTAL_KM * 100).toFixed(2);
+    const needPerDay  = Math.ceil((TOTAL_KM - totalKm) / parseInt(daysLeft));
+    const avgPerDay   = (totalKm / parseInt(daysElapsed)).toFixed(1);
+
+    // 파일 내 데이터 부분 교체
+    let newContent = currentContent;
+
+    // runners 배열 교체
+    const rStart = newContent.indexOf('const runners=[');
+    const rEnd   = newContent.indexOf('].sort((a,b)=>b.km-a.km);') + '  ].sort((a,b)=>b.km-a.km);'.length;
+    if (rStart === -1 || rEnd < rStart) throw new Error('runners 배열을 찾을 수 없어요. 파일 형식을 확인해주세요');
+    newContent = newContent.slice(0, rStart) + newRunners + newContent.slice(rEnd);
+
+    // 날짜/일수 교체
+    newContent = newContent.replace(
+      /const TOTAL=40075,DAYS_ELAPSED=\d+,DAYS_LEFT=\d+,CIRC=\d+;/,
+      `const TOTAL=40075,DAYS_ELAPSED=${daysElapsed},DAYS_LEFT=${daysLeft},CIRC=${CIRC};`
+    );
+
+    // 상단 날짜 표시 교체
+    newContent = newContent.replace(
+      /\d{4}\.\d{2}\.\d{2} – \d{2}\.\d{2} &nbsp;\|&nbsp; D\+\d+ &nbsp;\|&nbsp; \d+일 남음/,
+      `${dateLabel} &nbsp;|&nbsp; D+${daysElapsed} &nbsp;|&nbsp; ${daysLeft}일 남음`
+    );
+
+    // 하단 스트립 참가자 수
+    newContent = newContent.replace(
+      /<span class="bstrip-num green">\d+<\/span>명/,
+      `<span class="bstrip-num green">${parsedRunners.length}</span>명`
+    );
+
+    showStatus('loading', '🚀 GitHub에 업로드 중...');
+
+    // 3. 파일 업데이트
+    const putRes = await fetch(
+      `https://api.github.com/repos/${GH_USER}/${GH_REPO}/contents/${ghFilename}`,
+      {
+        method: 'PUT',
+        headers: { Authorization:`Bearer ${token}`, Accept:'application/vnd.github+json', 'Content-Type':'application/json' },
+        body: JSON.stringify({
+          message: `데이터 업데이트 (D+${daysElapsed}, 총 ${totalKm.toFixed(1)}km, ${parsedRunners.length}명)`,
+          content: btoa(unescape(encodeURIComponent(newContent))),
+          sha: sha
+        })
+      }
+    );
+    if (!putRes.ok) {
+      const errData = await putRes.json();
+      throw new Error(`업로드 실패: ${errData.message}`);
+    }
+
+    showStatus('success',
+      `✅ 배포 완료! GitHub에 업로드됐어요.<br>
+       📊 총 ${parsedRunners.length}명 · ${totalKm.toFixed(1)}km · D+${daysElapsed}<br>
+       🌐 Netlify가 자동 반영까지 1~2분 기다려주세요.<br>
+       <a href="https://${GH_REPO}.netlify.app" target="_blank" style="color:#1e7a40;font-weight:700">
+       → 대시보드 확인하기</a>`
+    );
+  } catch(e) {
+    showStatus('error', `❌ 오류 발생: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚀 GitHub에 바로 배포하기';
+  }
+}
+
+function buildRunnersJS(runners) {
+  const lines = runners.map(r =>
+    `    {name:${JSON.stringify(r.rawName||r.name)},tag:${JSON.stringify(r.tag)},km:${r.km},hasClass:${r.hasClass},classKey:${JSON.stringify(r.classKey)}}`
+  ).join(',\n');
+  return `const runners=[\n${lines}\n  ].sort((a,b)=>b.km-a.km);`;
+}
+
+function showStatus(type, html) {
+  const box = document.getElementById('statusBox');
+  box.className = `status-box ${type}`;
+  box.innerHTML = html;
+  box.style.display = 'block';
+}
+</script>
+</body>
+</html>
